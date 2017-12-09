@@ -1,10 +1,8 @@
-package nest_test
+package nest
 
 import (
 	"testing"
 	"time"
-
-	"github.com/goph/nest"
 )
 
 func TestIsZeroValueOfType(t *testing.T) {
@@ -21,8 +19,43 @@ func TestIsZeroValueOfType(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			if nest.IsZeroValueOfType(test) == false {
+			if isZeroValueOfType(test) == false {
 				t.Error("zero value not detected")
+			}
+		})
+	}
+}
+
+func TestIsTrue(t *testing.T) {
+	tests := map[string]bool{
+		"true":            true,
+		"TRUE":            true,
+		"false":           false,
+		"FALSE":           false,
+		"oiajdfoidahfios": false,
+	}
+
+	for input, expected := range tests {
+		t.Run("", func(t *testing.T) {
+			if isTrue(input) != expected {
+				t.Errorf("%s is expected to be parsed into %v, received %v", input, expected, !expected)
+			}
+		})
+	}
+}
+
+func TestLowerFirst(t *testing.T) {
+	tests := map[string]string{
+		"string": "string",
+		"STRING": "sTRING",
+		"sTRING": "sTRING",
+		"String": "string",
+	}
+
+	for input, expected := range tests {
+		t.Run("", func(t *testing.T) {
+			if actual := lowerFirst(input); actual != expected {
+				t.Errorf("%s is expected to be parsed into %s, received %s", input, expected, actual)
 			}
 		})
 	}
