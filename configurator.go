@@ -105,6 +105,16 @@ func (c *Configurator) Load(config interface{}) error {
 
 		field := elem.Field(i)
 
+		// Resolve pointer to it's actual type
+		for field.Kind() == reflect.Ptr {
+			// Set to zero value when field is nil
+			if field.IsNil() {
+				field.Set(reflect.New(field.Type().Elem()))
+			}
+
+			field = field.Elem()
+		}
+
 		// Ignore unsupported field
 		if _, unsupported := unsupportedTypes[field.Kind()]; unsupported {
 			continue
@@ -198,6 +208,13 @@ func (c *Configurator) Load(config interface{}) error {
 
 func processField(field reflect.Value, value string) error {
 	typ := field.Type()
+
+	// Resolve pointer to actual field and type
+	// Zero value is already created earlier (when necessary)
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+		field = field.Elem()
+	}
 
 	switch field.Kind() {
 	case reflect.String:

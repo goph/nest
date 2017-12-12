@@ -331,6 +331,70 @@ func TestConfigurator_Load_Types(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestConfigurator_Load_PointerTypes(t *testing.T) {
+	type config struct {
+		String *string `default:"string"`
+
+		Int   *int   `default:"1"`
+		Int8  *int8  `default:"1"`
+		Int32 *int32 `default:"1"`
+		Int64 *int64 `default:"1"`
+
+		Uint   *uint   `default:"1"`
+		Uint8  *uint8  `default:"1"`
+		Uint32 *uint32 `default:"1"`
+		Uint64 *uint64 `default:"1"`
+
+		Float32 *float32 `default:"1.0"`
+		Float64 *float64 `default:"1.0"`
+
+		Bool *bool `default:"true"`
+	}
+
+	var string = "string"
+
+	var int int = 1
+	var int8 int8 = 1
+	var int32 int32 = 1
+	var int64 int64 = 1
+
+	var uint uint = 1
+	var uint8 uint8 = 1
+	var uint32 uint32 = 1
+	var uint64 uint64 = 1
+
+	var float32 float32 = 1.0
+	var float64 float64 = 1.0
+
+	var bool bool = true
+
+	expected := config{
+		String: &string,
+
+		Int:   &int,
+		Int8:  &int8,
+		Int32: &int32,
+		Int64: &int64,
+
+		Uint:   &uint,
+		Uint8:  &uint8,
+		Uint32: &uint32,
+		Uint64: &uint64,
+
+		Float32: &float32,
+		Float64: &float64,
+
+		Bool: &bool,
+	}
+	actual := config{}
+
+	configurator := nest.NewConfigurator()
+
+	err := configurator.Load(&actual)
+	require.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
 func TestConfigurator_Load_TypeDefaults(t *testing.T) {
 	type config struct {
 		String string `default:"string"`
