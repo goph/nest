@@ -233,6 +233,37 @@ func TestConfigurator_Load_FlagHelp(t *testing.T) {
 	os.Args = backupArgs
 }
 
+func TestConfigurator_Load_FlagHelpWithName(t *testing.T) {
+	type config struct {
+		Value string `flag:""`
+	}
+
+	c := config{}
+
+	configurator := nest.NewConfigurator()
+	configurator.SetName("my service")
+
+	backupArgs := os.Args
+	os.Args = []string{"program", "--help"}
+
+	stderr := os.Stderr
+	r, w, _ := os.Pipe()
+	os.Stderr = w
+
+	err := configurator.Load(&c)
+
+	w.Close()
+	os.Stderr = stderr
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+
+	require.Error(t, err)
+	assert.Equal(t, nest.ErrFlagHelp, err)
+	assert.Equal(t, "Usage of my service:\n      --value string   \n", buf.String())
+
+	os.Args = backupArgs
+}
+
 func TestConfigurator_Load_Environment(t *testing.T) {
 	type config struct {
 		Value string `env:""`

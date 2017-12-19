@@ -47,8 +47,11 @@ func NewConfigurator() *Configurator {
 }
 
 type Configurator struct {
+	// Used when displaying help
+	name string
+
 	envPrefix string
-	viper *viper.Viper
+	viper     *viper.Viper
 
 	mu sync.Mutex
 }
@@ -59,6 +62,13 @@ func (c *Configurator) SetEnvPrefix(prefix string) {
 
 	c.envPrefix = prefix
 	c.viper.SetEnvPrefix(prefix)
+}
+
+func (c *Configurator) SetName(name string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.name = name
 }
 
 // mergeWithEnvPrefix merges an environment variable alias with the configured prefix.
@@ -90,7 +100,12 @@ func (c *Configurator) Load(config interface{}) error {
 
 	structType := elem.Type()
 
-	flags := pflag.NewFlagSet("nest", pflag.ContinueOnError)
+	name := c.name
+	if name == "" {
+		name = "nest"
+	}
+
+	flags := pflag.NewFlagSet(name, pflag.ContinueOnError)
 	var parseFlags bool
 
 	// Gather configuration definition information
