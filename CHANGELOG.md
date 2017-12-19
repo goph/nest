@@ -25,8 +25,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Panic when help is requested (#1)
-- Application name when help is displayed (#2)
+- Panic when help is requested ([#1](https://github.com/goph/nest/issues/1))
+- Application name when help is displayed ([#2](https://github.com/goph/nest/issues/2))
 
 
 ## 0.1.0 - 2017-12-18
@@ -34,5 +34,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Initial release
 
 
-[Unreleased]: https://github.com/goph/fxt/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/goph/fxt/compare/v0.1.0...v0.2.0
+[Unreleased]: https://github.com/goph/nest/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/goph/nest/compare/v0.1.0...v0.2.0
