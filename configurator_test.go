@@ -3,6 +3,7 @@ package nest_test
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/goph/nest"
 	"github.com/stretchr/testify/assert"
@@ -325,6 +326,8 @@ func TestConfigurator_Load_Types(t *testing.T) {
 		Float64 float64
 
 		Bool bool
+
+		Duration time.Duration
 	}
 
 	expected := config{
@@ -344,6 +347,8 @@ func TestConfigurator_Load_Types(t *testing.T) {
 		Float64: 1.0,
 
 		Bool: true,
+
+		Duration: 10 * time.Second,
 	}
 	actual := expected
 
@@ -372,6 +377,8 @@ func TestConfigurator_Load_PointerTypes(t *testing.T) {
 		Float64 *float64 `default:"1.0"`
 
 		Bool *bool `default:"true"`
+
+		Duration *time.Duration `default:"10s"`
 	}
 
 	var string = "string"
@@ -391,6 +398,8 @@ func TestConfigurator_Load_PointerTypes(t *testing.T) {
 
 	var bool bool = true
 
+	var duration time.Duration = 10 * time.Second
+
 	expected := config{
 		String: &string,
 
@@ -408,6 +417,8 @@ func TestConfigurator_Load_PointerTypes(t *testing.T) {
 		Float64: &float64,
 
 		Bool: &bool,
+
+		Duration: &duration,
 	}
 	actual := config{}
 
@@ -436,6 +447,8 @@ func TestConfigurator_Load_TypeDefaults(t *testing.T) {
 		Float64 float64 `default:"1.0"`
 
 		Bool bool `default:"true"`
+
+		Duration time.Duration `default:"10s"`
 	}
 
 	expected := config{
@@ -455,6 +468,8 @@ func TestConfigurator_Load_TypeDefaults(t *testing.T) {
 		Float64: 1.0,
 
 		Bool: true,
+
+		Duration: 10 * time.Second,
 	}
 	actual := config{}
 

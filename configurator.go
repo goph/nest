@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -221,7 +222,19 @@ func processField(field reflect.Value, value string) error {
 		field.SetString(value)
 
 	case reflect.Int, reflect.Int8, reflect.Int32, reflect.Int64:
-		val, err := strconv.ParseInt(value, 0, typ.Bits())
+		var (
+			val int64
+			err error
+		)
+
+		if field.Kind() == reflect.Int64 && typ.PkgPath() == "time" && typ.Name() == "Duration" {
+			var d time.Duration
+			d, err = time.ParseDuration(value)
+			val = int64(d)
+		} else {
+			val, err = strconv.ParseInt(value, 0, typ.Bits())
+		}
+
 		if err != nil {
 			return err
 		}
