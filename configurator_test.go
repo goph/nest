@@ -1,6 +1,8 @@
 package nest_test
 
 import (
+	"bytes"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -197,6 +199,36 @@ func TestConfigurator_Load_FlagWithUpperCaseFirstAlias(t *testing.T) {
 	err := configurator.Load(&actual)
 	require.NoError(t, err)
 	assert.Equal(t, expected, actual)
+
+	os.Args = backupArgs
+}
+
+func TestConfigurator_Load_FlagHelp(t *testing.T) {
+	type config struct {
+		Value string `flag:""`
+	}
+
+	c := config{}
+
+	configurator := nest.NewConfigurator()
+
+	backupArgs := os.Args
+	os.Args = []string{"program", "--help"}
+
+	stderr := os.Stderr
+	r, w, _ := os.Pipe()
+	os.Stderr = w
+
+	err := configurator.Load(&c)
+
+	w.Close()
+	os.Stderr = stderr
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+
+	require.Error(t, err)
+	assert.Equal(t, nest.ErrFlagHelp, err)
+	assert.Equal(t, "Usage of nest:\n      --value string   \n", buf.String())
 
 	os.Args = backupArgs
 }

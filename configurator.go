@@ -21,6 +21,8 @@ var (
 
 	// ErrNotStruct is returned when value passed to config.Load() is not a struct.
 	ErrNotStruct = errors.New("value passed is not a struct")
+
+	ErrFlagHelp = pflag.ErrHelp
 )
 
 // unsupportedTypes is a list of types that cannot be configured at the moment.
@@ -88,7 +90,7 @@ func (c *Configurator) Load(config interface{}) error {
 
 	structType := elem.Type()
 
-	flags := pflag.NewFlagSet("nest", pflag.PanicOnError)
+	flags := pflag.NewFlagSet("nest", pflag.ContinueOnError)
 	var parseFlags bool
 
 	// Gather configuration definition information
@@ -165,7 +167,9 @@ func (c *Configurator) Load(config interface{}) error {
 	// Only parse flags if there is any
 	if parseFlags {
 		err := flags.Parse(os.Args)
-		if err != nil {
+		if err == pflag.ErrHelp {
+			return ErrFlagHelp
+		} else if err != nil {
 			return err
 		}
 	}

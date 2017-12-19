@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `viper.Viper` instance is maintained during the configurator lifecycle and is not recreated
 
+### Fixed
+
+- Panic when help is requested (#1)
+
 
 ## 0.1.0 - 2017-12-18
 
