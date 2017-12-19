@@ -39,11 +39,14 @@ var unsupportedTypes = map[reflect.Kind]bool{
 }
 
 func NewConfigurator() *Configurator {
-	return &Configurator{}
+	return &Configurator{
+		viper: viper.New(),
+	}
 }
 
 type Configurator struct {
 	envPrefix string
+	viper *viper.Viper
 
 	mu sync.Mutex
 }
@@ -53,6 +56,7 @@ func (c *Configurator) SetEnvPrefix(prefix string) {
 	defer c.mu.Unlock()
 
 	c.envPrefix = prefix
+	c.viper.SetEnvPrefix(prefix)
 }
 
 // mergeWithEnvPrefix merges an environment variable alias with the configured prefix.
@@ -81,9 +85,6 @@ func (c *Configurator) Load(config interface{}) error {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
-
-	viper := viper.New()
-	viper.SetEnvPrefix(c.envPrefix)
 
 	structType := elem.Type()
 
@@ -123,7 +124,7 @@ func (c *Configurator) Load(config interface{}) error {
 
 		// Set value override
 		if value := field.Interface(); isZeroValueOfType(value) == false {
-			viper.Set(structField.Name, value)
+			c.viper.Set(structField.Name, value)
 		}
 
 		// Map flag to field
@@ -140,7 +141,7 @@ func (c *Configurator) Load(config interface{}) error {
 			flags.String(value, "", structField.Tag.Get("usage"))
 			flag := flags.Lookup(value)
 
-			viper.BindPFlag(structField.Name, flag)
+			c.viper.BindPFlag(structField.Name, flag)
 		}
 
 		// Map environment variable to field
@@ -152,12 +153,12 @@ func (c *Configurator) Load(config interface{}) error {
 				args = append(args, c.mergeWithEnvPrefix(value))
 			}
 
-			viper.BindEnv(args...)
+			c.viper.BindEnv(args...)
 		}
 
 		// Set default (if any)
 		if value, ok := structField.Tag.Lookup("default"); ok {
-			viper.SetDefault(structField.Name, value)
+			c.viper.SetDefault(structField.Name, value)
 		}
 	}
 
@@ -179,7 +180,7 @@ func (c *Configurator) Load(config interface{}) error {
 		}
 
 		// Check if value is present in Viper
-		if viper.IsSet(structField.Name) == false {
+		if c.viper.IsSet(structField.Name) == false {
 			// Check for required value
 			if value, ok := structField.Tag.Lookup("required"); ok && isTrue(value) {
 				return fmt.Errorf("required field %s missing value", structField.Name)
@@ -190,7 +191,7 @@ func (c *Configurator) Load(config interface{}) error {
 		}
 
 		// Get the value from Viper
-		value := viper.Get(structField.Name)
+		value := c.viper.Get(structField.Name)
 
 		field := elem.Field(i)
 

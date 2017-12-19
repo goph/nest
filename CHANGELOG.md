@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `time.Duration` support
 
+### Changed
+
+- `viper.Viper` instance is maintained during the configurator lifecycle and is not recreated
+
 
 ## 0.1.0 - 2017-12-18
 
