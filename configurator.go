@@ -133,7 +133,7 @@ func (c *Configurator) Load(config interface{}) error {
 		}
 
 		// Manually ignored field
-		if value, ok := structField.Tag.Lookup("ignored"); ok && isTrue(value) {
+		if value, ok := structField.Tag.Lookup(TagIgnored); ok && isTrue(value) {
 			continue
 		}
 
@@ -160,7 +160,7 @@ func (c *Configurator) Load(config interface{}) error {
 		}
 
 		// Map flag to field
-		if value, ok := structField.Tag.Lookup("flag"); ok {
+		if value, ok := structField.Tag.Lookup(TagFlag); ok {
 			parseFlags = true
 
 			// Use the field name as flag name if it is not provided
@@ -169,7 +169,7 @@ func (c *Configurator) Load(config interface{}) error {
 				value = lowerFirst(structField.Name)
 
 				// Try to split words in the struct name if possible
-				if v, ok := structField.Tag.Lookup("split_words"); ok && isTrue(v) {
+				if v, ok := structField.Tag.Lookup(TagSplitWords); ok && isTrue(v) {
 					v = splitWords(value, "-")
 					if v != "" {
 						value = v
@@ -178,20 +178,20 @@ func (c *Configurator) Load(config interface{}) error {
 			}
 
 			// TODO: put default value here?
-			flags.String(value, "", structField.Tag.Get("usage"))
+			flags.String(value, "", structField.Tag.Get(TagUsage))
 			flag := flags.Lookup(value)
 
 			c.viper.BindPFlag(structField.Name, flag)
 		}
 
 		// Map environment variable to field
-		if value, ok := structField.Tag.Lookup("env"); ok {
+		if value, ok := structField.Tag.Lookup(TagEnvironment); ok {
 			args := []string{structField.Name}
 
 			// An environment variable alias is provided
 			if value != "" {
 				args = append(args, c.mergeWithEnvPrefix(value))
-			} else if v, ok := structField.Tag.Lookup("split_words"); ok && isTrue(v) { // Try to split words in the struct name if possible
+			} else if v, ok := structField.Tag.Lookup(TagSplitWords); ok && isTrue(v) { // Try to split words in the struct name if possible
 				v = splitWords(structField.Name, "_")
 				if v != "" {
 					args = append(args, c.mergeWithEnvPrefix(v))
@@ -202,7 +202,7 @@ func (c *Configurator) Load(config interface{}) error {
 		}
 
 		// Set default (if any)
-		if value, ok := structField.Tag.Lookup("default"); ok {
+		if value, ok := structField.Tag.Lookup(TagDefault); ok {
 			c.viper.SetDefault(structField.Name, value)
 		}
 	}
@@ -222,14 +222,14 @@ func (c *Configurator) Load(config interface{}) error {
 		structField := structType.Field(i)
 
 		// Manually ignored field
-		if value, ok := structField.Tag.Lookup("ignored"); ok && isTrue(value) {
+		if value, ok := structField.Tag.Lookup(TagIgnored); ok && isTrue(value) {
 			continue
 		}
 
 		// Check if value is present in Viper
 		if c.viper.IsSet(structField.Name) == false {
 			// Check for required value
-			if value, ok := structField.Tag.Lookup("required"); ok && isTrue(value) {
+			if value, ok := structField.Tag.Lookup(TagRequired); ok && isTrue(value) {
 				return fmt.Errorf("required field %s missing value", structField.Name)
 			}
 

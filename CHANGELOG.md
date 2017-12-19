@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Missing global `SetName` function
 - `SetArgs` to set command line arguments manually
+- Add struct tag constant values
 
 
 ## [0.2.0] - 2017-12-19
