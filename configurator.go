@@ -100,12 +100,11 @@ func (c *Configurator) Load(config interface{}) error {
 
 	structType := elem.Type()
 
-	name := c.name
-	if name == "" {
-		name = os.Args[0]
+	if c.name == "" {
+		c.name = os.Args[0]
 	}
 
-	flags := pflag.NewFlagSet(name, pflag.ContinueOnError)
+	flags := pflag.NewFlagSet(c.name, pflag.ContinueOnError)
 	var parseFlags bool
 
 	// Gather configuration definition information

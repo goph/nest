@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `viper.Viper` instance is maintained during the configurator lifecycle and is not recreated
 - Use first argument as application name when not provided
+- Set application name globally when not provided
 
 ### Fixed
 
