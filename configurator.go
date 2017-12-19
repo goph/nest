@@ -102,7 +102,7 @@ func (c *Configurator) Load(config interface{}) error {
 
 	name := c.name
 	if name == "" {
-		name = "nest"
+		name = os.Args[0]
 	}
 
 	flags := pflag.NewFlagSet(name, pflag.ContinueOnError)

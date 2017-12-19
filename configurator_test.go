@@ -228,7 +228,7 @@ func TestConfigurator_Load_FlagHelp(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Equal(t, nest.ErrFlagHelp, err)
-	assert.Equal(t, "Usage of nest:\n      --value string   \n", buf.String())
+	assert.Equal(t, "Usage of program:\n      --value string   \n", buf.String())
 
 	os.Args = backupArgs
 }
