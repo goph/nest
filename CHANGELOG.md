@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - `time.Duration` support
+- `split_words` tag support fir splitting camel cased field names to environment variable and flag names
 
 ### Changed
 

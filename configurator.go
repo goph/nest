@@ -151,6 +151,14 @@ func (c *Configurator) Load(config interface{}) error {
 			if value == "" {
 				// Make the first character lower case, because that's customary
 				value = lowerFirst(structField.Name)
+
+				// Try to split words in the struct name if possible
+				if v, ok := structField.Tag.Lookup("split_words"); ok && isTrue(v) {
+					v = splitWords(value, "-")
+					if v != "" {
+						value = v
+					}
+				}
 			}
 
 			// TODO: put default value here?
@@ -167,6 +175,11 @@ func (c *Configurator) Load(config interface{}) error {
 			// An environment variable alias is provided
 			if value != "" {
 				args = append(args, c.mergeWithEnvPrefix(value))
+			} else if v, ok := structField.Tag.Lookup("split_words"); ok && isTrue(v) { // Try to split words in the struct name if possible
+				v = splitWords(structField.Name, "_")
+				if v != "" {
+					args = append(args, c.mergeWithEnvPrefix(v))
+				}
 			}
 
 			c.viper.BindEnv(args...)

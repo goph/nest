@@ -264,6 +264,28 @@ func TestConfigurator_Load_FlagHelpWithName(t *testing.T) {
 	os.Args = backupArgs
 }
 
+func TestConfigurator_Load_FlagSplitWords(t *testing.T) {
+	type config struct {
+		OtherValue string `flag:"" split_words:"true"`
+	}
+
+	expected := config{
+		OtherValue: "value",
+	}
+	actual := config{}
+
+	configurator := nest.NewConfigurator()
+
+	backupArgs := os.Args
+	os.Args = []string{"program", "--other-value", "value"}
+
+	err := configurator.Load(&actual)
+	require.NoError(t, err)
+	assert.Equal(t, expected, actual)
+
+	os.Args = backupArgs
+}
+
 func TestConfigurator_Load_Environment(t *testing.T) {
 	type config struct {
 		Value string `env:""`
@@ -346,6 +368,28 @@ func TestConfigurator_Load_EnvironmentWithPrefixAndAlias(t *testing.T) {
 
 	os.Clearenv()
 	os.Setenv("APP_OTHER_VALUE", "value")
+
+	err := configurator.Load(&actual)
+	require.NoError(t, err)
+	assert.Equal(t, expected, actual)
+
+	os.Clearenv()
+}
+
+func TestConfigurator_Load_EnvironmentSplitWords(t *testing.T) {
+	type config struct {
+		OtherValue string `env:"" split_words:"true"`
+	}
+
+	expected := config{
+		OtherValue: "value",
+	}
+	actual := config{}
+
+	configurator := nest.NewConfigurator()
+
+	os.Clearenv()
+	os.Setenv("OTHER_VALUE", "value")
 
 	err := configurator.Load(&actual)
 	require.NoError(t, err)

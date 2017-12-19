@@ -60,3 +60,35 @@ func TestLowerFirst(t *testing.T) {
 		})
 	}
 }
+
+func TestSplitWords_Snake(t *testing.T) {
+	tests := map[string]string{
+		"CamelCase": "camel_case",
+		"camelCase": "camel_case",
+		"camel": "camel",
+	}
+
+	for input, expected := range tests {
+		t.Run("", func(t *testing.T) {
+			if actual := splitWords(input, "_"); actual != expected {
+				t.Errorf("%s is expected to become %s, received %s", input, expected, actual)
+			}
+		})
+	}
+}
+
+func TestSplitWords_Spinal(t *testing.T) {
+	tests := map[string]string{
+		"CamelCase": "camel-case",
+		"camelCase": "camel-case",
+		"camel": "camel",
+	}
+
+	for input, expected := range tests {
+		t.Run("", func(t *testing.T) {
+			if actual := splitWords(input, "-"); actual != expected {
+				t.Errorf("%s is expected to become %s, received %s", input, expected, actual)
+			}
+		})
+	}
+}
