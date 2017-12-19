@@ -42,6 +42,7 @@ var unsupportedTypes = map[reflect.Kind]bool{
 
 func NewConfigurator() *Configurator {
 	return &Configurator{
+		args: os.Args,
 		viper: viper.New(),
 	}
 }
@@ -50,12 +51,18 @@ type Configurator struct {
 	// Used when displaying help
 	name string
 
+	// Command line arguments (defaults to os.Args)
+	args []string
+
+	// Environment prefix
 	envPrefix string
-	viper     *viper.Viper
+
+	viper *viper.Viper
 
 	mu sync.Mutex
 }
 
+// SetEnvPrefix manually sets the environment variable prefix.
 func (c *Configurator) SetEnvPrefix(prefix string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -64,11 +71,20 @@ func (c *Configurator) SetEnvPrefix(prefix string) {
 	c.viper.SetEnvPrefix(prefix)
 }
 
+// SetName sets the application name for displaying help.
 func (c *Configurator) SetName(name string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.name = name
+}
+
+// SetArgs sets the command line arguments.
+func (c *Configurator) SetArgs(args []string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.args = args
 }
 
 // mergeWithEnvPrefix merges an environment variable alias with the configured prefix.
@@ -101,7 +117,7 @@ func (c *Configurator) Load(config interface{}) error {
 	structType := elem.Type()
 
 	if c.name == "" {
-		c.name = os.Args[0]
+		c.name = c.args[0]
 	}
 
 	flags := pflag.NewFlagSet(c.name, pflag.ContinueOnError)
@@ -193,7 +209,7 @@ func (c *Configurator) Load(config interface{}) error {
 
 	// Only parse flags if there is any
 	if parseFlags {
-		err := flags.Parse(os.Args)
+		err := flags.Parse(c.args)
 		if err == pflag.ErrHelp {
 			return ErrFlagHelp
 		} else if err != nil {

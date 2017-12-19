@@ -17,6 +17,11 @@ func SetName(name string) {
 	c.SetName(name)
 }
 
+// SetArgs calls the function with the same name on the global configurator instance.
+func SetArgs(args []string) {
+	c.SetArgs(args)
+}
+
 // Load calls the function with the same name on the global configurator instance.
 func Load(config interface{}) error {
 	return c.Load(config)

@@ -148,15 +148,11 @@ func TestConfigurator_Load_Flag(t *testing.T) {
 	actual := config{}
 
 	configurator := nest.NewConfigurator()
-
-	backupArgs := os.Args
-	os.Args = []string{"program", "--value", "value"}
+	configurator.SetArgs([]string{"program", "--value", "value"})
 
 	err := configurator.Load(&actual)
 	require.NoError(t, err)
 	assert.Equal(t, expected, actual)
-
-	os.Args = backupArgs
 }
 
 func TestConfigurator_Load_FlagWithAlias(t *testing.T) {
@@ -170,15 +166,11 @@ func TestConfigurator_Load_FlagWithAlias(t *testing.T) {
 	actual := config{}
 
 	configurator := nest.NewConfigurator()
-
-	backupArgs := os.Args
-	os.Args = []string{"program", "--value", "value"}
+	configurator.SetArgs([]string{"program", "--value", "value"})
 
 	err := configurator.Load(&actual)
 	require.NoError(t, err)
 	assert.Equal(t, expected, actual)
-
-	os.Args = backupArgs
 }
 
 func TestConfigurator_Load_FlagWithUpperCaseFirstAlias(t *testing.T) {
@@ -192,15 +184,11 @@ func TestConfigurator_Load_FlagWithUpperCaseFirstAlias(t *testing.T) {
 	actual := config{}
 
 	configurator := nest.NewConfigurator()
-
-	backupArgs := os.Args
-	os.Args = []string{"program", "--Value", "value"}
+	configurator.SetArgs([]string{"program", "--Value", "value"})
 
 	err := configurator.Load(&actual)
 	require.NoError(t, err)
 	assert.Equal(t, expected, actual)
-
-	os.Args = backupArgs
 }
 
 func TestConfigurator_Load_FlagHelp(t *testing.T) {
@@ -211,9 +199,7 @@ func TestConfigurator_Load_FlagHelp(t *testing.T) {
 	c := config{}
 
 	configurator := nest.NewConfigurator()
-
-	backupArgs := os.Args
-	os.Args = []string{"program", "--help"}
+	configurator.SetArgs([]string{"program", "--help"})
 
 	stderr := os.Stderr
 	r, w, _ := os.Pipe()
@@ -229,8 +215,6 @@ func TestConfigurator_Load_FlagHelp(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, nest.ErrFlagHelp, err)
 	assert.Equal(t, "Usage of program:\n      --value string   \n", buf.String())
-
-	os.Args = backupArgs
 }
 
 func TestConfigurator_Load_FlagHelpWithName(t *testing.T) {
@@ -242,9 +226,7 @@ func TestConfigurator_Load_FlagHelpWithName(t *testing.T) {
 
 	configurator := nest.NewConfigurator()
 	configurator.SetName("my service")
-
-	backupArgs := os.Args
-	os.Args = []string{"program", "--help"}
+	configurator.SetArgs([]string{"program", "--help"})
 
 	stderr := os.Stderr
 	r, w, _ := os.Pipe()
@@ -260,8 +242,6 @@ func TestConfigurator_Load_FlagHelpWithName(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, nest.ErrFlagHelp, err)
 	assert.Equal(t, "Usage of my service:\n      --value string   \n", buf.String())
-
-	os.Args = backupArgs
 }
 
 func TestConfigurator_Load_FlagSplitWords(t *testing.T) {
@@ -275,9 +255,27 @@ func TestConfigurator_Load_FlagSplitWords(t *testing.T) {
 	actual := config{}
 
 	configurator := nest.NewConfigurator()
+	configurator.SetArgs([]string{"program", "--other-value", "value"})
+
+	err := configurator.Load(&actual)
+	require.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func TestConfigurator_Load_FlagOsArgs(t *testing.T) {
+	type config struct {
+		Value string `flag:""`
+	}
+
+	expected := config{
+		Value: "value",
+	}
+	actual := config{}
 
 	backupArgs := os.Args
-	os.Args = []string{"program", "--other-value", "value"}
+	os.Args = []string{"program", "--value", "value"}
+
+	configurator := nest.NewConfigurator()
 
 	err := configurator.Load(&actual)
 	require.NoError(t, err)
@@ -606,16 +604,14 @@ func TestConfigurator_Load_PrecedenceOrder(t *testing.T) {
 	}
 
 	configurator := nest.NewConfigurator()
+	configurator.SetArgs([]string{"program", "--flag", "value"})
 
 	os.Clearenv()
 	os.Setenv("ENV", "value")
-	backupArgs := os.Args
-	os.Args = []string{"program", "--flag", "value"}
 
 	err := configurator.Load(&actual)
 	require.NoError(t, err)
 	assert.Equal(t, expected, actual)
 
 	os.Clearenv()
-	os.Args = backupArgs
 }
