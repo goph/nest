@@ -51,29 +51,6 @@ func TestConfigurator_Load_IgnoreUnexportedField(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestConfigurator_Load_IgnoreStructs(t *testing.T) {
-	type subconfig struct {
-		value string `default:"default"`
-	}
-
-	type config struct {
-		sconfig subconfig
-	}
-
-	expected := config{
-		sconfig: subconfig{
-			value: "value",
-		},
-	}
-	actual := expected
-
-	configurator := nest.NewConfigurator()
-
-	err := configurator.Load(&actual)
-	require.NoError(t, err)
-	assert.Equal(t, expected, actual)
-}
-
 func TestConfigurator_Load_Ignored(t *testing.T) {
 	type config struct {
 		Value string `ignored:"true" default:"default"`
@@ -403,6 +380,29 @@ func TestConfigurator_Load_Default(t *testing.T) {
 
 	expected := config{
 		Value: "default",
+	}
+	actual := config{}
+
+	configurator := nest.NewConfigurator()
+
+	err := configurator.Load(&actual)
+	require.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func TestConfigurator_Load_Structs(t *testing.T) {
+	type subconfig struct {
+		Value string `default:"default"`
+	}
+
+	type config struct {
+		Sconfig subconfig
+	}
+
+	expected := config{
+		Sconfig: subconfig{
+			Value: "default",
+		},
 	}
 	actual := config{}
 

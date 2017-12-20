@@ -36,7 +36,6 @@ var unsupportedTypes = map[reflect.Kind]bool{
 	reflect.Map:           true,
 	reflect.Ptr:           true,
 	reflect.Slice:         true,
-	reflect.Struct:        true,
 	reflect.UnsafePointer: true,
 }
 
@@ -123,20 +122,12 @@ func (c *Configurator) Load(config interface{}) error {
 	flags := pflag.NewFlagSet(c.name, pflag.ContinueOnError)
 	var parseFlags bool
 
+	// Internal loop counter for structs
+	var j int
+
 	// Gather configuration definition information
 	for i := 0; i < structType.NumField(); i++ {
 		structField := structType.Field(i)
-
-		// Ignore unexported field
-		if ast.IsExported(structField.Name) == false {
-			continue
-		}
-
-		// Manually ignored field
-		if value, ok := structField.Tag.Lookup(TagIgnored); ok && isTrue(value) {
-			continue
-		}
-
 		field := elem.Field(i)
 
 		// Resolve pointer to it's actual type
@@ -147,6 +138,34 @@ func (c *Configurator) Load(config interface{}) error {
 			}
 
 			field = field.Elem()
+		}
+
+		// Process child struct fields
+		if field.Kind() == reflect.Struct {
+			structType := field.Type()
+
+			// If we reached the last field reset the counter and continue with the next field in the parent struct
+			if j >= structType.NumField() {
+				j = 0
+				continue
+			}
+
+			structField = structType.Field(j)
+			field = field.Field(j)
+
+			// Cheat the loop and hold it back until we finish looping the child struct fields
+			j++
+			i--
+		}
+
+		// Ignore unexported field
+		if ast.IsExported(structField.Name) == false {
+			continue
+		}
+
+		// Manually ignored field
+		if value, ok := structField.Tag.Lookup(TagIgnored); ok && isTrue(value) {
+			continue
 		}
 
 		// Ignore unsupported field
@@ -217,9 +236,42 @@ func (c *Configurator) Load(config interface{}) error {
 		}
 	}
 
+	// Reset the loop cheater counter
+	j = 0
+
 	// Apply configuration values
 	for i := 0; i < structType.NumField(); i++ {
 		structField := structType.Field(i)
+		field := elem.Field(i)
+		resolvedField := elem.Field(i)
+
+		// Resolve pointer to it's actual type
+		for resolvedField.Kind() == reflect.Ptr {
+			// Set to zero value when field is nil
+			if resolvedField.IsNil() {
+				resolvedField.Set(reflect.New(resolvedField.Type().Elem()))
+			}
+
+			resolvedField = resolvedField.Elem()
+		}
+
+		// Process child struct fields
+		if resolvedField.Kind() == reflect.Struct {
+			structType := resolvedField.Type()
+
+			// If we reached the last field reset the counter and continue with the next field in the parent struct
+			if j >= structType.NumField() {
+				j = 0
+				continue
+			}
+
+			structField = structType.Field(j)
+			field = field.Field(j)
+
+			// Cheat the loop and hold it back until we finish looping the child struct fields
+			j++
+			i--
+		}
 
 		// Manually ignored field
 		if value, ok := structField.Tag.Lookup(TagIgnored); ok && isTrue(value) {
@@ -239,8 +291,6 @@ func (c *Configurator) Load(config interface{}) error {
 
 		// Get the value from Viper
 		value := c.viper.Get(structField.Name)
-
-		field := elem.Field(i)
 
 		if value != nil {
 			// Process the value as string
