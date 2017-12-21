@@ -127,16 +127,7 @@ func (c *Configurator) Load(config interface{}) error {
 
 		// Map environment variable to field
 		if def.hasEnv {
-			var args []string
-
-			// An environment variable alias is provided
-			if def.envAlias != "" {
-				args = []string{def.key, c.mergeWithEnvPrefix(def.envAlias)}
-			} else {
-				args = []string{def.key, c.mergeWithEnvPrefix(strings.Replace(def.key, ".", "_", -1))}
-			}
-
-			c.viper.BindEnv(args...)
+			c.viper.BindEnv(def.key, c.mergeWithEnvPrefix(def.envAlias))
 		}
 
 		// Set default (if any)

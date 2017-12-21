@@ -149,6 +149,8 @@ func getDefinitionsForStruct(structRef reflect.Value, prefix string) []fieldDefi
 				if v != "" {
 					def.envAlias = strings.ToUpper(envPrefix + v)
 				}
+			} else {
+				def.envAlias = strings.ToUpper(envPrefix + structField.Name)
 			}
 		}
 

@@ -173,7 +173,7 @@ func TestField_Environment(t *testing.T) {
 			field: ref.Field(0),
 
 			hasEnv:   true,
-			envAlias: "",
+			envAlias: "VALUE",
 		},
 	}
 
@@ -340,7 +340,7 @@ func TestField_ChildStruct_Environment(t *testing.T) {
 			field: ref.Field(0).Field(0),
 
 			hasEnv:   true,
-			envAlias: "",
+			envAlias: "SCONFIG_VALUE",
 		},
 	}
 
