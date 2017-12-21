@@ -3,7 +3,6 @@ package nest
 import (
 	"errors"
 	"fmt"
-	"go/ast"
 	"os"
 	"reflect"
 	"strconv"
@@ -25,23 +24,9 @@ var (
 	ErrFlagHelp = pflag.ErrHelp
 )
 
-// unsupportedTypes is a list of types that cannot be configured at the moment.
-var unsupportedTypes = map[reflect.Kind]bool{
-	reflect.Complex64:     true,
-	reflect.Complex128:    true,
-	reflect.Array:         true,
-	reflect.Chan:          true,
-	reflect.Func:          true,
-	reflect.Interface:     true,
-	reflect.Map:           true,
-	reflect.Ptr:           true,
-	reflect.Slice:         true,
-	reflect.UnsafePointer: true,
-}
-
 func NewConfigurator() *Configurator {
 	return &Configurator{
-		args: os.Args,
+		args:  os.Args,
 		viper: viper.New(),
 	}
 }
@@ -113,8 +98,6 @@ func (c *Configurator) Load(config interface{}) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	structType := elem.Type()
-
 	if c.name == "" {
 		c.name = c.args[0]
 	}
@@ -122,107 +105,43 @@ func (c *Configurator) Load(config interface{}) error {
 	flags := pflag.NewFlagSet(c.name, pflag.ContinueOnError)
 	var parseFlags bool
 
-	// Internal loop counter for structs
-	var j int
+	definitions := getDefinitions(elem)
 
-	// Gather configuration definition information
-	for i := 0; i < structType.NumField(); i++ {
-		structField := structType.Field(i)
-		field := elem.Field(i)
-
-		// Resolve pointer to it's actual type
-		for field.Kind() == reflect.Ptr {
-			// Set to zero value when field is nil
-			if field.IsNil() {
-				field.Set(reflect.New(field.Type().Elem()))
-			}
-
-			field = field.Elem()
-		}
-
-		// Process child struct fields
-		if field.Kind() == reflect.Struct {
-			structType := field.Type()
-
-			// If we reached the last field reset the counter and continue with the next field in the parent struct
-			if j >= structType.NumField() {
-				j = 0
-				continue
-			}
-
-			structField = structType.Field(j)
-			field = field.Field(j)
-
-			// Cheat the loop and hold it back until we finish looping the child struct fields
-			j++
-			i--
-		}
-
-		// Ignore unexported field
-		if ast.IsExported(structField.Name) == false {
-			continue
-		}
-
-		// Manually ignored field
-		if value, ok := structField.Tag.Lookup(TagIgnored); ok && isTrue(value) {
-			continue
-		}
-
-		// Ignore unsupported field
-		if _, unsupported := unsupportedTypes[field.Kind()]; unsupported {
-			continue
-		}
-
+	// Load definitions into Viper
+	for _, def := range definitions {
 		// Set value override
-		if value := field.Interface(); isZeroValueOfType(value) == false {
-			c.viper.Set(structField.Name, value)
+		if def.hasOverride {
+			c.viper.Set(def.key, def.overrideValue)
 		}
 
 		// Map flag to field
-		if value, ok := structField.Tag.Lookup(TagFlag); ok {
+		if def.hasFlag {
 			parseFlags = true
 
-			// Use the field name as flag name if it is not provided
-			if value == "" {
-				// Make the first character lower case, because that's customary
-				value = lowerFirst(structField.Name)
-
-				// Try to split words in the struct name if possible
-				if v, ok := structField.Tag.Lookup(TagSplitWords); ok && isTrue(v) {
-					v = splitWords(value, "-")
-					if v != "" {
-						value = v
-					}
-				}
-			}
-
 			// TODO: put default value here?
-			flags.String(value, "", structField.Tag.Get(TagUsage))
-			flag := flags.Lookup(value)
+			flags.String(def.flagAlias, "", def.usage)
+			flag := flags.Lookup(def.flagAlias)
 
-			c.viper.BindPFlag(structField.Name, flag)
+			c.viper.BindPFlag(def.key, flag)
 		}
 
 		// Map environment variable to field
-		if value, ok := structField.Tag.Lookup(TagEnvironment); ok {
-			args := []string{structField.Name}
+		if def.hasEnv {
+			var args []string
 
 			// An environment variable alias is provided
-			if value != "" {
-				args = append(args, c.mergeWithEnvPrefix(value))
-			} else if v, ok := structField.Tag.Lookup(TagSplitWords); ok && isTrue(v) { // Try to split words in the struct name if possible
-				v = splitWords(structField.Name, "_")
-				if v != "" {
-					args = append(args, c.mergeWithEnvPrefix(v))
-				}
+			if def.envAlias != "" {
+				args = []string{def.key, c.mergeWithEnvPrefix(def.envAlias)}
+			} else {
+				args = []string{def.key, c.mergeWithEnvPrefix(strings.Replace(def.key, ".", "_", -1))}
 			}
 
 			c.viper.BindEnv(args...)
 		}
 
 		// Set default (if any)
-		if value, ok := structField.Tag.Lookup(TagDefault); ok {
-			c.viper.SetDefault(structField.Name, value)
+		if def.hasDefault {
+			c.viper.SetDefault(def.key, def.defaultValue)
 		}
 	}
 
@@ -236,53 +155,13 @@ func (c *Configurator) Load(config interface{}) error {
 		}
 	}
 
-	// Reset the loop cheater counter
-	j = 0
-
 	// Apply configuration values
-	for i := 0; i < structType.NumField(); i++ {
-		structField := structType.Field(i)
-		field := elem.Field(i)
-		resolvedField := elem.Field(i)
-
-		// Resolve pointer to it's actual type
-		for resolvedField.Kind() == reflect.Ptr {
-			// Set to zero value when field is nil
-			if resolvedField.IsNil() {
-				resolvedField.Set(reflect.New(resolvedField.Type().Elem()))
-			}
-
-			resolvedField = resolvedField.Elem()
-		}
-
-		// Process child struct fields
-		if resolvedField.Kind() == reflect.Struct {
-			structType := resolvedField.Type()
-
-			// If we reached the last field reset the counter and continue with the next field in the parent struct
-			if j >= structType.NumField() {
-				j = 0
-				continue
-			}
-
-			structField = structType.Field(j)
-			field = field.Field(j)
-
-			// Cheat the loop and hold it back until we finish looping the child struct fields
-			j++
-			i--
-		}
-
-		// Manually ignored field
-		if value, ok := structField.Tag.Lookup(TagIgnored); ok && isTrue(value) {
-			continue
-		}
-
+	for _, def := range definitions {
 		// Check if value is present in Viper
-		if c.viper.IsSet(structField.Name) == false {
+		if c.viper.IsSet(def.key) == false {
 			// Check for required value
-			if value, ok := structField.Tag.Lookup(TagRequired); ok && isTrue(value) {
-				return fmt.Errorf("required field %s missing value", structField.Name)
+			if def.required {
+				return fmt.Errorf("required field %s missing value", def.key)
 			}
 
 			// Ignore unset value
@@ -290,11 +169,11 @@ func (c *Configurator) Load(config interface{}) error {
 		}
 
 		// Get the value from Viper
-		value := c.viper.Get(structField.Name)
+		value := c.viper.Get(def.key)
 
 		if value != nil {
 			// Process the value as string
-			err := processField(field, fmt.Sprintf("%v", value))
+			err := processField(def.field, fmt.Sprintf("%v", value))
 
 			if err != nil {
 				return err
@@ -307,13 +186,6 @@ func (c *Configurator) Load(config interface{}) error {
 
 func processField(field reflect.Value, value string) error {
 	typ := field.Type()
-
-	// Resolve pointer to actual field and type
-	// Zero value is already created earlier (when necessary)
-	if typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-		field = field.Elem()
-	}
 
 	switch field.Kind() {
 	case reflect.String:

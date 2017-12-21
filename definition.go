@@ -6,6 +6,20 @@ import (
 	"strings"
 )
 
+// unsupportedTypes is a list of types that cannot be configured at the moment.
+var unsupportedTypes = map[reflect.Kind]bool{
+	reflect.Complex64:     true,
+	reflect.Complex128:    true,
+	reflect.Array:         true,
+	reflect.Chan:          true,
+	reflect.Func:          true,
+	reflect.Interface:     true,
+	reflect.Map:           true,
+	reflect.Ptr:           true,
+	reflect.Slice:         true,
+	reflect.UnsafePointer: true,
+}
+
 type fieldDefinition struct {
 	key   string
 	field reflect.Value
@@ -23,6 +37,8 @@ type fieldDefinition struct {
 	defaultValue string
 
 	required bool
+
+	usage string
 }
 
 func getDefinitions(structRef reflect.Value) []fieldDefinition {
@@ -90,6 +106,8 @@ func getDefinitionsForStruct(structRef reflect.Value, prefix string) []fieldDefi
 		def := fieldDefinition{
 			key:   keyPrefix + structField.Name,
 			field: field,
+
+			usage: structField.Tag.Get(TagUsage),
 		}
 
 		// Set value override

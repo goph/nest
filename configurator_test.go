@@ -390,7 +390,7 @@ func TestConfigurator_Load_Default(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestConfigurator_Load_Structs(t *testing.T) {
+func TestConfigurator_Load_Struct(t *testing.T) {
 	type subconfig struct {
 		Value string `default:"default"`
 	}
@@ -411,6 +411,35 @@ func TestConfigurator_Load_Structs(t *testing.T) {
 	err := configurator.Load(&actual)
 	require.NoError(t, err)
 	assert.Equal(t, expected, actual)
+}
+
+func TestConfigurator_Load_StructEnvWithPrefix(t *testing.T) {
+	type subconfig struct {
+		Value string `env:""`
+	}
+
+	type config struct {
+		Sconfig subconfig
+	}
+
+	expected := config{
+		Sconfig: subconfig{
+			Value: "value",
+		},
+	}
+	actual := config{}
+
+	configurator := nest.NewConfigurator()
+	configurator.SetEnvPrefix("app")
+
+	os.Clearenv()
+	os.Setenv("APP_SCONFIG_VALUE", "value")
+
+	err := configurator.Load(&actual)
+	require.NoError(t, err)
+	assert.Equal(t, expected, actual)
+
+	os.Clearenv()
 }
 
 func TestConfigurator_Load_Types(t *testing.T) {
