@@ -595,8 +595,8 @@ func TestConfigurator_Load_PrecedenceOrder(t *testing.T) {
 
 	expected := config{
 		Override: "override",
-		Flag:     "value",
-		Env:      "value",
+		Flag:     "flag",
+		Env:      "env",
 		Default:  "default",
 	}
 	actual := config{
@@ -604,10 +604,10 @@ func TestConfigurator_Load_PrecedenceOrder(t *testing.T) {
 	}
 
 	configurator := nest.NewConfigurator()
-	configurator.SetArgs([]string{"program", "--flag", "value"})
+	configurator.SetArgs([]string{"program", "--flag", "flag"})
 
 	os.Clearenv()
-	os.Setenv("ENV", "value")
+	os.Setenv("ENV", "env")
 
 	err := configurator.Load(&actual)
 	require.NoError(t, err)
