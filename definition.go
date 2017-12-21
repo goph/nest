@@ -92,7 +92,14 @@ func getDefinitionsForStruct(structRef reflect.Value, prefix string) []fieldDefi
 
 		// Process child struct fields
 		if field.Kind() == reflect.Struct {
-			structDefinitions := getDefinitionsForStruct(field, keyPrefix+structField.Name)
+			prefix := keyPrefix+structField.Name
+
+			// Check if the field is required
+			if value, ok := structField.Tag.Lookup(TagPrefix); ok && value != "" {
+				prefix = keyPrefix+value
+			}
+
+			structDefinitions := getDefinitionsForStruct(field, prefix)
 			definitions = append(definitions, structDefinitions...)
 
 			continue

@@ -7,6 +7,8 @@ const (
 	TagRequired   = "required"
 	TagSplitWords = "split_words"
 
+	TagPrefix = "prefix"
+
 	TagEnvironment = "env"
 
 	TagFlag = "flag"

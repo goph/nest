@@ -442,6 +442,35 @@ func TestConfigurator_Load_StructEnvWithPrefix(t *testing.T) {
 	os.Clearenv()
 }
 
+func TestConfigurator_Load_StructPrefixEnvWithPrefix(t *testing.T) {
+	type subconfig struct {
+		Value string `env:""`
+	}
+
+	type config struct {
+		Sconfig subconfig `prefix:"subconfig"`
+	}
+
+	expected := config{
+		Sconfig: subconfig{
+			Value: "value",
+		},
+	}
+	actual := config{}
+
+	configurator := nest.NewConfigurator()
+	configurator.SetEnvPrefix("app")
+
+	os.Clearenv()
+	os.Setenv("APP_SUBCONFIG_VALUE", "value")
+
+	err := configurator.Load(&actual)
+	require.NoError(t, err)
+	assert.Equal(t, expected, actual)
+
+	os.Clearenv()
+}
+
 func TestConfigurator_Load_Types(t *testing.T) {
 	type config struct {
 		String string

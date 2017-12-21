@@ -269,6 +269,31 @@ func TestField_ChildStruct(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestField_ChildStruct_prefix(t *testing.T) {
+	type subconfig struct {
+		Value string `default:"default"`
+	}
+
+	type config struct {
+		Sconfig subconfig `prefix:"subconfig"`
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "subconfig.Value",
+			field: ref.Field(0).Field(0),
+
+			hasDefault:   true,
+			defaultValue: "default",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
 func TestField_ChildStruct_Flag(t *testing.T) {
 	type subconfig struct {
 		Value string `flag:""`
@@ -287,6 +312,31 @@ func TestField_ChildStruct_Flag(t *testing.T) {
 
 			hasFlag:   true,
 			flagAlias: "sconfig-value",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_ChildStruct_Prefix_Flag(t *testing.T) {
+	type subconfig struct {
+		Value string `flag:""`
+	}
+
+	type config struct {
+		Sconfig subconfig `prefix:"subconfig"`
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "subconfig.Value",
+			field: ref.Field(0).Field(0),
+
+			hasFlag:   true,
+			flagAlias: "subconfig-value",
 		},
 	}
 
@@ -323,6 +373,35 @@ func TestField_ChildStructMulti_Flag(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestField_ChildStructMulti_Prefix_Flag(t *testing.T) {
+	type subsubconfig struct {
+		Value string `flag:""`
+	}
+
+	type subconfig struct {
+		Sconfig subsubconfig `prefix:"subconfig2"`
+	}
+
+	type config struct {
+		Sconfig subconfig `prefix:"subconfig"`
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "subconfig.subconfig2.Value",
+			field: ref.Field(0).Field(0).Field(0),
+
+			hasFlag:   true,
+			flagAlias: "subconfig-subconfig2-value",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
 func TestField_ChildStruct_Environment(t *testing.T) {
 	type subconfig struct {
 		Value string `env:""`
@@ -341,6 +420,31 @@ func TestField_ChildStruct_Environment(t *testing.T) {
 
 			hasEnv:   true,
 			envAlias: "SCONFIG_VALUE",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_ChildStruct_Prefix_Environment(t *testing.T) {
+	type subconfig struct {
+		Value string `env:""`
+	}
+
+	type config struct {
+		Sconfig subconfig `prefix:"subconfig"`
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "subconfig.Value",
+			field: ref.Field(0).Field(0),
+
+			hasEnv:   true,
+			envAlias: "SUBCONFIG_VALUE",
 		},
 	}
 
@@ -395,6 +499,35 @@ func TestField_ChildStructMulti_EnvironmentWithAlias(t *testing.T) {
 
 			hasEnv:   true,
 			envAlias: "SCONFIG_SCONFIG_OTHER_VALUE",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_ChildStructMulti_Prefix_EnvironmentWithAlias(t *testing.T) {
+	type subsubconfig struct {
+		Value string `env:"other_value"`
+	}
+
+	type subconfig struct {
+		Sconfig subsubconfig `prefix:"subconfig2"`
+	}
+
+	type config struct {
+		Sconfig subconfig `prefix:"subconfig"`
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "subconfig.subconfig2.Value",
+			field: ref.Field(0).Field(0).Field(0),
+
+			hasEnv:   true,
+			envAlias: "SUBCONFIG_SUBCONFIG2_OTHER_VALUE",
 		},
 	}
 
