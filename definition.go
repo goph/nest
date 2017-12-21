@@ -55,12 +55,12 @@ func getDefinitionsForStruct(structRef reflect.Value, prefix string) []fieldDefi
 
 	var flagPrefix string
 	if prefix != "" {
-		flagPrefix = lowerFirst(prefix) + "-"
+		flagPrefix = strings.ToLower(strings.Replace(prefix, ".", "-", -1)) + "-"
 	}
 
 	var envPrefix string
 	if prefix != "" {
-		envPrefix = strings.ToLower(prefix) + "_"
+		envPrefix = strings.ToLower(strings.Replace(prefix, ".", "_", -1)) + "_"
 	}
 
 	var definitions []fieldDefinition
@@ -92,7 +92,7 @@ func getDefinitionsForStruct(structRef reflect.Value, prefix string) []fieldDefi
 
 		// Process child struct fields
 		if field.Kind() == reflect.Struct {
-			structDefinitions := getDefinitionsForStruct(field, structField.Name)
+			structDefinitions := getDefinitionsForStruct(field, keyPrefix+structField.Name)
 			definitions = append(definitions, structDefinitions...)
 
 			continue
