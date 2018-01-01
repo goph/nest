@@ -269,7 +269,7 @@ func TestField_ChildStruct(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestField_ChildStruct_prefix(t *testing.T) {
+func TestField_ChildStruct_Prefix(t *testing.T) {
 	type subconfig struct {
 		Value string `default:"default"`
 	}
@@ -517,6 +517,322 @@ func TestField_ChildStructMulti_Prefix_EnvironmentWithAlias(t *testing.T) {
 
 	type config struct {
 		Sconfig subconfig `prefix:"subconfig"`
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "subconfig.subconfig2.Value",
+			field: ref.Field(0).Field(0).Field(0),
+
+			hasEnv:   true,
+			envAlias: "SUBCONFIG_SUBCONFIG2_OTHER_VALUE",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStruct(t *testing.T) {
+	type Subconfig struct {
+		Value string `default:"default"`
+	}
+
+	type config struct {
+		Subconfig
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "Subconfig.Value",
+			field: ref.Field(0).Field(0),
+
+			hasDefault:   true,
+			defaultValue: "default",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStruct_Prefix(t *testing.T) {
+	type Subconfig struct {
+		Value string `default:"default"`
+	}
+
+	type config struct {
+		Subconfig `prefix:"subconfig"`
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "subconfig.Value",
+			field: ref.Field(0).Field(0),
+
+			hasDefault:   true,
+			defaultValue: "default",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStruct_Flag(t *testing.T) {
+	type Subconfig struct {
+		Value string `flag:""`
+	}
+
+	type config struct {
+		Subconfig
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "Subconfig.Value",
+			field: ref.Field(0).Field(0),
+
+			hasFlag:   true,
+			flagAlias: "subconfig-value",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStruct_Prefix_Flag(t *testing.T) {
+	type Subconfig struct {
+		Value string `flag:""`
+	}
+
+	type config struct {
+		Subconfig `prefix:"subconfig"`
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "subconfig.Value",
+			field: ref.Field(0).Field(0),
+
+			hasFlag:   true,
+			flagAlias: "subconfig-value",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStructMulti_Flag(t *testing.T) {
+	type Subsubconfig struct {
+		Value string `flag:""`
+	}
+
+	type Subconfig struct {
+		Subsubconfig
+	}
+
+	type config struct {
+		Subconfig
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "Subconfig.Subsubconfig.Value",
+			field: ref.Field(0).Field(0).Field(0),
+
+			hasFlag:   true,
+			flagAlias: "subconfig-subsubconfig-value",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStructMulti_Prefix_Flag(t *testing.T) {
+	type Subsubconfig struct {
+		Value string `flag:""`
+	}
+
+	type Subconfig struct {
+		Subsubconfig `prefix:"subconfig2"`
+	}
+
+	type config struct {
+		Subconfig `prefix:"subconfig"`
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "subconfig.subconfig2.Value",
+			field: ref.Field(0).Field(0).Field(0),
+
+			hasFlag:   true,
+			flagAlias: "subconfig-subconfig2-value",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStruct_Environment(t *testing.T) {
+	type Subconfig struct {
+		Value string `env:""`
+	}
+
+	type config struct {
+		Subconfig
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "Subconfig.Value",
+			field: ref.Field(0).Field(0),
+
+			hasEnv:   true,
+			envAlias: "SUBCONFIG_VALUE",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStruct_Prefix_Environment(t *testing.T) {
+	type Subconfig struct {
+		Value string `env:""`
+	}
+
+	type config struct {
+		Subconfig `prefix:"subconfig"`
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "subconfig.Value",
+			field: ref.Field(0).Field(0),
+
+			hasEnv:   true,
+			envAlias: "SUBCONFIG_VALUE",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStruct_EnvironmentWithAlias(t *testing.T) {
+	type Subconfig struct {
+		Value string `env:"other_value"`
+	}
+
+	type config struct {
+		Subconfig
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "Subconfig.Value",
+			field: ref.Field(0).Field(0),
+
+			hasEnv:   true,
+			envAlias: "SUBCONFIG_OTHER_VALUE",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStructMulti_EnvironmentWithAlias(t *testing.T) {
+	type Subsubconfig struct {
+		Value string `env:"other_value"`
+	}
+
+	type Subconfig struct {
+		Subsubconfig
+	}
+
+	type config struct {
+		Subconfig
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "Subconfig.Subsubconfig.Value",
+			field: ref.Field(0).Field(0).Field(0),
+
+			hasEnv:   true,
+			envAlias: "SUBCONFIG_SUBSUBCONFIG_OTHER_VALUE",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStruct_Prefix_EnvironmentWithAlias(t *testing.T) {
+	type Subconfig struct {
+		Value string `env:"other_value"`
+	}
+
+	type config struct {
+		Subconfig `prefix:"subconfig"`
+	}
+
+	c := config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "subconfig.Value",
+			field: ref.Field(0).Field(0),
+
+			hasEnv:   true,
+			envAlias: "SUBCONFIG_OTHER_VALUE",
+		},
+	}
+
+	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_EmbeddedStructMulti_Prefix_EnvironmentWithAlias(t *testing.T) {
+	type Subsubconfig struct {
+		Value string `env:"other_value"`
+	}
+
+	type Subconfig struct {
+		Subsubconfig `prefix:"subconfig2"`
+	}
+
+	type config struct {
+		Subconfig `prefix:"subconfig"`
 	}
 
 	c := config{}
