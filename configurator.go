@@ -176,6 +176,10 @@ func (c *Configurator) Load(config interface{}) error {
 }
 
 func processField(field reflect.Value, value string) error {
+	if canDecode(field) {
+		return decode(field, value)
+	}
+
 	typ := field.Type()
 
 	switch field.Kind() {

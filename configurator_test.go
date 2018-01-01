@@ -12,6 +12,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type Unmarshalable string
+
+func (u *Unmarshalable) UnmarshalText(text []byte) error {
+	*u = Unmarshalable(text)
+
+	return nil
+}
+
+type UnmarshalableStruct struct {
+	Value string
+}
+
+func (u *UnmarshalableStruct) UnmarshalText(text []byte) error {
+	u.Value = string(text)
+
+	return nil
+}
+
 func TestConfigurator_Load_NotStructPointer(t *testing.T) {
 	type config struct {
 		Value string
@@ -442,6 +460,31 @@ func TestConfigurator_Load_StructEnvWithPrefix(t *testing.T) {
 	os.Clearenv()
 }
 
+func TestConfigurator_Load_Decodable(t *testing.T) {
+	type subconfig struct {
+		Value UnmarshalableStruct `default:"default"`
+	}
+
+	type config struct {
+		Sconfig subconfig
+	}
+
+	expected := config{
+		Sconfig: subconfig{
+			Value: UnmarshalableStruct{
+				Value: "default",
+			},
+		},
+	}
+	actual := config{}
+
+	configurator := nest.NewConfigurator()
+
+	err := configurator.Load(&actual)
+	require.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
 func TestConfigurator_Load_StructPrefixEnvWithPrefix(t *testing.T) {
 	type subconfig struct {
 		Value string `env:""`
@@ -491,6 +534,8 @@ func TestConfigurator_Load_Types(t *testing.T) {
 		Bool bool
 
 		Duration time.Duration
+
+		Decodable Unmarshalable
 	}
 
 	expected := config{
@@ -512,6 +557,8 @@ func TestConfigurator_Load_Types(t *testing.T) {
 		Bool: true,
 
 		Duration: 10 * time.Second,
+
+		Decodable: "value",
 	}
 	actual := expected
 
@@ -612,6 +659,9 @@ func TestConfigurator_Load_TypeDefaults(t *testing.T) {
 		Bool bool `default:"true"`
 
 		Duration time.Duration `default:"10s"`
+
+		Decodable       Unmarshalable       `default:"value"`
+		DecodableStruct UnmarshalableStruct `default:"value"`
 	}
 
 	expected := config{
@@ -633,6 +683,11 @@ func TestConfigurator_Load_TypeDefaults(t *testing.T) {
 		Bool: true,
 
 		Duration: 10 * time.Second,
+
+		Decodable: "value",
+		DecodableStruct: UnmarshalableStruct{
+			Value: "value",
+		},
 	}
 	actual := config{}
 

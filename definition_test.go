@@ -7,6 +7,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type Unmarshalable string
+
+func (u *Unmarshalable) UnmarshalText(text []byte) error {
+	*u = Unmarshalable(text)
+
+	return nil
+}
+
+type UnmarshalableStruct struct {
+	Value string
+}
+
+func (u *UnmarshalableStruct) UnmarshalText(text []byte) error {
+	u.Value = string(text)
+
+	return nil
+}
+
 func TestField_IgnoreUnexportedField(t *testing.T) {
 	type config struct {
 		value string `required:"true"`
@@ -848,5 +866,48 @@ func TestField_EmbeddedStructMulti_Prefix_EnvironmentWithAlias(t *testing.T) {
 	}
 
 	actual := getDefinitions(ref)
+	assert.Equal(t, expected, actual)
+}
+
+func TestField_Decode(t *testing.T) {
+	type config struct {
+		Value Unmarshalable `default:"default"`
+	}
+
+	c := &config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "Value",
+			field: ref.Elem().Field(0),
+
+			hasDefault:   true,
+			defaultValue: "default",
+		},
+	}
+
+	actual := getDefinitions(ref.Elem())
+	assert.Equal(t, expected, actual)
+}
+
+
+func TestField_StructDecode(t *testing.T) {
+	type config struct {
+		Value UnmarshalableStruct `default:"default"`
+	}
+
+	c := &config{}
+	ref := reflect.ValueOf(c)
+	expected := []fieldDefinition{
+		{
+			key:   "Value",
+			field: ref.Elem().Field(0),
+
+			hasDefault:   true,
+			defaultValue: "default",
+		},
+	}
+
+	actual := getDefinitions(ref.Elem())
 	assert.Equal(t, expected, actual)
 }

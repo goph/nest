@@ -1,10 +1,12 @@
 package nest
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsZeroValueOfType(t *testing.T) {
@@ -67,7 +69,7 @@ func TestSplitWords_Snake(t *testing.T) {
 	tests := map[string]string{
 		"CamelCase": "camel_case",
 		"camelCase": "camel_case",
-		"camel": "camel",
+		"camel":     "camel",
 	}
 
 	for input, expected := range tests {
@@ -83,7 +85,7 @@ func TestSplitWords_Spinal(t *testing.T) {
 	tests := map[string]string{
 		"CamelCase": "camel-case",
 		"camelCase": "camel-case",
-		"camel": "camel",
+		"camel":     "camel",
 	}
 
 	for input, expected := range tests {
@@ -98,12 +100,64 @@ func TestSplitWords_Spinal(t *testing.T) {
 func TestIsExported(t *testing.T) {
 	tests := map[string]bool{
 		"nonExported": false,
-		"Exported": true,
+		"Exported":    true,
 	}
 
 	for name, result := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, result, isExported(name))
+		})
+	}
+}
+
+type unmarshalable struct {
+	value string
+}
+
+func (u *unmarshalable) UnmarshalText(text []byte) error {
+	u.value = string(text)
+
+	return nil
+}
+
+func (u *unmarshalable) getValue() string {
+	return u.value
+}
+
+func TestCanDecode(t *testing.T) {
+	tests := map[string]struct {
+		v         interface{}
+		decodable bool
+	}{
+		"unmarshalable": {
+			&unmarshalable{},
+			true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.decodable, canDecode(reflect.ValueOf(test.v)))
+		})
+	}
+}
+
+func TestDecode(t *testing.T) {
+	tests := map[string]interface {
+		getValue() string
+	}{
+		"unmarshalable": &unmarshalable{},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			field := reflect.ValueOf(test)
+
+			if assert.True(t, canDecode(field)) {
+				err := decode(field, "data")
+				require.NoError(t, err)
+				assert.Equal(t, "data", test.getValue())
+			}
 		})
 	}
 }

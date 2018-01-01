@@ -1,6 +1,8 @@
 package nest
 
 import (
+	"encoding"
+	"errors"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -57,4 +59,37 @@ func isExported(name string) bool {
 	r, _ := utf8.DecodeRuneInString(name)
 
 	return unicode.IsUpper(r)
+}
+
+// canDecode checks whether a value can decode itself.
+func canDecode(field reflect.Value) bool {
+	// struct fields cannot fail this check
+	if !field.CanInterface() {
+		return false
+	}
+
+	_, ok := field.Interface().(encoding.TextUnmarshaler)
+	if !ok && field.CanAddr() {
+		_, ok = field.Addr().Interface().(encoding.TextUnmarshaler)
+	}
+
+	return ok
+}
+
+// decode makes a value decode itself.
+func decode(field reflect.Value, value string) error {
+	if !canDecode(field) {
+		return errors.New("value cannot decode itself")
+	}
+
+	v, ok := field.Interface().(encoding.TextUnmarshaler)
+	if !ok && field.CanAddr() {
+		v, ok = field.Addr().Interface().(encoding.TextUnmarshaler)
+	}
+
+	if !ok {
+		return errors.New("failed to find a decoding type")
+	}
+
+	return v.UnmarshalText([]byte(value))
 }

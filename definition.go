@@ -90,7 +90,7 @@ func getDefinitionsForStruct(structRef reflect.Value, prefix string) []fieldDefi
 		}
 
 		// Process child struct fields
-		if field.Kind() == reflect.Struct {
+		if field.Kind() == reflect.Struct && !canDecode(field) {
 			prefix := keyPrefix + structField.Name
 
 			// Check if the field is required
