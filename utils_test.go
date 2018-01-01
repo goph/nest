@@ -3,6 +3,8 @@ package nest
 import (
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsZeroValueOfType(t *testing.T) {
@@ -89,6 +91,19 @@ func TestSplitWords_Spinal(t *testing.T) {
 			if actual := splitWords(input, "-"); actual != expected {
 				t.Errorf("%s is expected to become %s, received %s", input, expected, actual)
 			}
+		})
+	}
+}
+
+func TestIsExported(t *testing.T) {
+	tests := map[string]bool{
+		"nonExported": false,
+		"Exported": true,
+	}
+
+	for name, result := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, result, isExported(name))
 		})
 	}
 }

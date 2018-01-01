@@ -1,7 +1,6 @@
 package nest
 
 import (
-	"go/ast"
 	"reflect"
 	"strings"
 )
@@ -71,7 +70,7 @@ func getDefinitionsForStruct(structRef reflect.Value, prefix string) []fieldDefi
 		field := structRef.Field(i)
 
 		// Ignore unexported field
-		if ast.IsExported(structField.Name) == false {
+		if isExported(structField.Name) == false {
 			continue
 		}
 
@@ -92,11 +91,11 @@ func getDefinitionsForStruct(structRef reflect.Value, prefix string) []fieldDefi
 
 		// Process child struct fields
 		if field.Kind() == reflect.Struct {
-			prefix := keyPrefix+structField.Name
+			prefix := keyPrefix + structField.Name
 
 			// Check if the field is required
 			if value, ok := structField.Tag.Lookup(TagPrefix); ok && value != "" {
-				prefix = keyPrefix+value
+				prefix = keyPrefix + value
 			}
 
 			structDefinitions := getDefinitionsForStruct(field, prefix)

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 var splitWordsRegexp *regexp.Regexp
@@ -49,4 +50,11 @@ func splitWords(s string, glue string) string {
 	}
 
 	return strings.ToLower(strings.Join(name, glue))
+}
+
+// isExported checks whether a struct field is exported or not.
+func isExported(name string) bool {
+	r, _ := utf8.DecodeRuneInString(name)
+
+	return unicode.IsUpper(r)
 }
