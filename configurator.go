@@ -21,6 +21,8 @@ var (
 	// ErrNotStruct is returned when value passed to config.Load() is not a struct.
 	ErrNotStruct = errors.New("value passed is not a struct")
 
+	// ErrFlagHelp is returned when the commandline arguments include -h or --help.
+	// Application should exit without an error as pflag handles outputting the manual.
 	ErrFlagHelp = pflag.ErrHelp
 )
 
