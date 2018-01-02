@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
+## [0.4.0] - 2018-01-02
+
 ### Added
 
 - `isExported` util function to avoid importing `ast` package
@@ -37,7 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - `time.Duration` support
-- `split_words` tag support fir splitting camel cased field names to environment variable and flag names
+- `split_words` tag support for splitting camel cased field names to environment variable and flag names
 
 ### Changed
 
@@ -56,6 +59,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Initial release
 
 
-[Unreleased]: https://github.com/goph/nest/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/goph/nest/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/goph/nest/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/goph/nest/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/goph/nest/compare/v0.1.0...v0.2.0
