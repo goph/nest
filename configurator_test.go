@@ -12,6 +12,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type Decodable string
+
+func (d *Decodable) Decode(value string) error {
+	*d = Decodable(value)
+
+	return nil
+}
+
+type DecodableStruct struct {
+	Value string
+}
+
+func (d *DecodableStruct) Decode(value string) error {
+	d.Value = value
+
+	return nil
+}
+
 type Unmarshalable string
 
 func (u *Unmarshalable) UnmarshalText(text []byte) error {
@@ -535,7 +553,8 @@ func TestConfigurator_Load_Types(t *testing.T) {
 
 		Duration time.Duration
 
-		Decodable Unmarshalable
+		Decodable     Decodable
+		Unmarshalable Unmarshalable
 	}
 
 	expected := config{
@@ -558,7 +577,8 @@ func TestConfigurator_Load_Types(t *testing.T) {
 
 		Duration: 10 * time.Second,
 
-		Decodable: "value",
+		Decodable:     "value",
+		Unmarshalable: "value",
 	}
 	actual := expected
 
@@ -660,8 +680,10 @@ func TestConfigurator_Load_TypeDefaults(t *testing.T) {
 
 		Duration time.Duration `default:"10s"`
 
-		Decodable       Unmarshalable       `default:"value"`
-		DecodableStruct UnmarshalableStruct `default:"value"`
+		Decodable           Decodable           `default:"value"`
+		DecodableStruct     DecodableStruct     `default:"value"`
+		Unmarshalable       Unmarshalable       `default:"value"`
+		UnmarshalableStruct UnmarshalableStruct `default:"value"`
 	}
 
 	expected := config{
@@ -685,7 +707,11 @@ func TestConfigurator_Load_TypeDefaults(t *testing.T) {
 		Duration: 10 * time.Second,
 
 		Decodable: "value",
-		DecodableStruct: UnmarshalableStruct{
+		DecodableStruct: DecodableStruct{
+			Value: "value",
+		},
+		Unmarshalable: "value",
+		UnmarshalableStruct: UnmarshalableStruct{
 			Value: "value",
 		},
 	}

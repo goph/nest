@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `isExported` util function to avoid importing `ast` package
 - Tests for embedded structs
 - Support for types implementing `encoding.TextUnmarshaler`
+- Support for types implementing `Decoder`
 
 
 ## [0.3.0] - 2017-12-21

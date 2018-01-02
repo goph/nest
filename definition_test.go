@@ -7,6 +7,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type Decodable string
+
+func (d *Decodable) Decode(value string) error {
+	*d = Decodable(value)
+
+	return nil
+}
+
+type DecodableStruct struct {
+	Value string
+}
+
+func (d *DecodableStruct) Decode(value string) error {
+	d.Value = value
+
+	return nil
+}
+
 type Unmarshalable string
 
 func (u *Unmarshalable) UnmarshalText(text []byte) error {
@@ -871,15 +889,23 @@ func TestField_EmbeddedStructMulti_Prefix_EnvironmentWithAlias(t *testing.T) {
 
 func TestField_Decode(t *testing.T) {
 	type config struct {
-		Value Unmarshalable `default:"default"`
+		DecodableValue     Decodable     `default:"default"`
+		UnmarshalableValue Unmarshalable `default:"default"`
 	}
 
 	c := &config{}
 	ref := reflect.ValueOf(c)
 	expected := []fieldDefinition{
 		{
-			key:   "Value",
+			key:   "DecodableValue",
 			field: ref.Elem().Field(0),
+
+			hasDefault:   true,
+			defaultValue: "default",
+		},
+		{
+			key:   "UnmarshalableValue",
+			field: ref.Elem().Field(1),
 
 			hasDefault:   true,
 			defaultValue: "default",
@@ -890,18 +916,25 @@ func TestField_Decode(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-
 func TestField_StructDecode(t *testing.T) {
 	type config struct {
-		Value UnmarshalableStruct `default:"default"`
+		DecodableValue     DecodableStruct     `default:"default"`
+		UnmarshalableValue UnmarshalableStruct `default:"default"`
 	}
 
 	c := &config{}
 	ref := reflect.ValueOf(c)
 	expected := []fieldDefinition{
 		{
-			key:   "Value",
+			key:   "DecodableValue",
 			field: ref.Elem().Field(0),
+
+			hasDefault:   true,
+			defaultValue: "default",
+		},
+		{
+			key:   "UnmarshalableValue",
+			field: ref.Elem().Field(1),
 
 			hasDefault:   true,
 			defaultValue: "default",
