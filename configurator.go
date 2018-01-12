@@ -3,6 +3,7 @@ package nest
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"strconv"
@@ -43,7 +44,8 @@ type Configurator struct {
 	// Environment prefix
 	envPrefix string
 
-	viper *viper.Viper
+	viper  *viper.Viper
+	output io.Writer
 
 	mu sync.Mutex
 }
@@ -71,6 +73,20 @@ func (c *Configurator) SetArgs(args []string) {
 	defer c.mu.Unlock()
 
 	c.args = args
+}
+
+// SetOutput sets the output writer used for help text and error messages.
+func (c *Configurator) SetOutput(output io.Writer) {
+	c.output = output
+}
+
+// out returns the configured output or the default which is STDERR.
+func (c *Configurator) out() io.Writer {
+	if c.output == nil {
+		c.output = os.Stderr
+	}
+
+	return c.output
 }
 
 // mergeWithEnvPrefix merges an environment variable alias with the configured prefix.
@@ -105,6 +121,8 @@ func (c *Configurator) Load(config interface{}) error {
 	}
 
 	flags := pflag.NewFlagSet(c.name, pflag.ContinueOnError)
+	flags.SetOutput(c.out())
+
 	var parseFlags bool
 
 	definitions := getDefinitions(elem)

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- `SetOutput` method for setting an output writer on the Configurator
+
 
 ## [0.4.0] - 2018-01-02
 

@@ -2,7 +2,6 @@ package nest_test
 
 import (
 	"bytes"
-	"io"
 	"os"
 	"testing"
 	"time"
@@ -211,19 +210,13 @@ func TestConfigurator_Load_FlagHelp(t *testing.T) {
 
 	c := config{}
 
+	var buf bytes.Buffer
+
 	configurator := nest.NewConfigurator()
 	configurator.SetArgs([]string{"program", "--help"})
-
-	stderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
+	configurator.SetOutput(&buf)
 
 	err := configurator.Load(&c)
-
-	w.Close()
-	os.Stderr = stderr
-	var buf bytes.Buffer
-	io.Copy(&buf, r)
 
 	require.Error(t, err)
 	assert.Equal(t, nest.ErrFlagHelp, err)
@@ -237,20 +230,14 @@ func TestConfigurator_Load_FlagHelpWithName(t *testing.T) {
 
 	c := config{}
 
+	var buf bytes.Buffer
+
 	configurator := nest.NewConfigurator()
 	configurator.SetName("my service")
 	configurator.SetArgs([]string{"program", "--help"})
-
-	stderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
+	configurator.SetOutput(&buf)
 
 	err := configurator.Load(&c)
-
-	w.Close()
-	os.Stderr = stderr
-	var buf bytes.Buffer
-	io.Copy(&buf, r)
 
 	require.Error(t, err)
 	assert.Equal(t, nest.ErrFlagHelp, err)
