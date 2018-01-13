@@ -2,7 +2,6 @@ package nest_test
 
 import (
 	"bytes"
-	"io"
 	"os"
 	"testing"
 	"time"
@@ -211,23 +210,17 @@ func TestConfigurator_Load_FlagHelp(t *testing.T) {
 
 	c := config{}
 
+	var buf bytes.Buffer
+
 	configurator := nest.NewConfigurator()
 	configurator.SetArgs([]string{"program", "--help"})
-
-	stderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
+	configurator.SetOutput(&buf)
 
 	err := configurator.Load(&c)
 
-	w.Close()
-	os.Stderr = stderr
-	var buf bytes.Buffer
-	io.Copy(&buf, r)
-
 	require.Error(t, err)
 	assert.Equal(t, nest.ErrFlagHelp, err)
-	assert.Equal(t, "Usage of program:\n      --value string   \n", buf.String())
+	assert.Equal(t, "Usage of program:\n\n\nFLAGS:\n\n      --value string   \n", buf.String())
 }
 
 func TestConfigurator_Load_FlagHelpWithName(t *testing.T) {
@@ -237,24 +230,18 @@ func TestConfigurator_Load_FlagHelpWithName(t *testing.T) {
 
 	c := config{}
 
+	var buf bytes.Buffer
+
 	configurator := nest.NewConfigurator()
 	configurator.SetName("my service")
 	configurator.SetArgs([]string{"program", "--help"})
-
-	stderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
+	configurator.SetOutput(&buf)
 
 	err := configurator.Load(&c)
 
-	w.Close()
-	os.Stderr = stderr
-	var buf bytes.Buffer
-	io.Copy(&buf, r)
-
 	require.Error(t, err)
 	assert.Equal(t, nest.ErrFlagHelp, err)
-	assert.Equal(t, "Usage of my service:\n      --value string   \n", buf.String())
+	assert.Equal(t, "Usage of my service:\n\n\nFLAGS:\n\n      --value string   \n", buf.String())
 }
 
 func TestConfigurator_Load_FlagSplitWords(t *testing.T) {
@@ -753,4 +740,25 @@ func TestConfigurator_Load_PrecedenceOrder(t *testing.T) {
 	assert.Equal(t, expected, actual)
 
 	os.Clearenv()
+}
+
+func TestConfigurator_Load_Help(t *testing.T) {
+	type config struct {
+		FlagValue string `flag:"value" default:"value" usage:"My flag value"`
+		EnvValue  string `env:"value" default:"value" usage:"My env value"`
+	}
+
+	c := config{}
+
+	var buf bytes.Buffer
+
+	configurator := nest.NewConfigurator()
+	configurator.SetArgs([]string{"program", "--help"})
+	configurator.SetOutput(&buf)
+
+	err := configurator.Load(&c)
+
+	require.Error(t, err)
+	assert.Equal(t, nest.ErrFlagHelp, err)
+	assert.Equal(t, "Usage of program:\n\n\nFLAGS:\n\n      --value string   My flag value (default \"value\")\n\n\nENVIRONMENT VARIABLES:\n\n      VALUE string   My env value (default \"value\")\n", buf.String())
 }

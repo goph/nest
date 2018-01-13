@@ -1,8 +1,10 @@
 package nest
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"strconv"
@@ -43,7 +45,8 @@ type Configurator struct {
 	// Environment prefix
 	envPrefix string
 
-	viper *viper.Viper
+	viper  *viper.Viper
+	output io.Writer
 
 	mu sync.Mutex
 }
@@ -71,6 +74,20 @@ func (c *Configurator) SetArgs(args []string) {
 	defer c.mu.Unlock()
 
 	c.args = args
+}
+
+// SetOutput sets the output writer used for help text and error messages.
+func (c *Configurator) SetOutput(output io.Writer) {
+	c.output = output
+}
+
+// out returns the configured output or the default which is STDERR.
+func (c *Configurator) out() io.Writer {
+	if c.output == nil {
+		c.output = os.Stderr
+	}
+
+	return c.output
 }
 
 // mergeWithEnvPrefix merges an environment variable alias with the configured prefix.
@@ -105,9 +122,17 @@ func (c *Configurator) Load(config interface{}) error {
 	}
 
 	flags := pflag.NewFlagSet(c.name, pflag.ContinueOnError)
+	flags.SetOutput(c.out())
+
 	var parseFlags bool
 
 	definitions := getDefinitions(elem)
+
+	flags.Usage = func() {
+		usage := getUsage(definitions)
+		fmt.Fprintf(c.out(), "Usage of %s:\n", c.name)
+		fmt.Fprint(c.out(), usage)
+	}
 
 	// Load definitions into Viper
 	for _, def := range definitions {
@@ -175,6 +200,121 @@ func (c *Configurator) Load(config interface{}) error {
 	}
 
 	return nil
+}
+
+// getUsage returns the usage string for flags and environment variables.
+func getUsage(definitions []fieldDefinition) string {
+	buf := new(bytes.Buffer)
+
+	var flagLines []string
+	var envLines []string
+
+	flagMaxlen := 0
+	envMaxlen := 0
+
+	for _, definition := range definitions {
+		// Default value hint
+		def := ""
+		if definition.hasDefault {
+			if definition.field.Type().Name() == "string" {
+				def += fmt.Sprintf(" (default %q)", definition.defaultValue)
+			} else {
+				def += fmt.Sprintf(" (default %s)", definition.defaultValue)
+			}
+		}
+
+		if definition.hasFlag {
+			line := ""
+
+			line = fmt.Sprintf("      --%s", definition.flagAlias)
+
+			// Make an educated guess about the flag
+			// TODO: check pflag UnquoteUsage
+			name := definition.field.Type().Name()
+			switch name {
+			case "bool":
+				name = ""
+			case "float64":
+				name = "float"
+			case "int64":
+				name = "int"
+			case "uint64":
+				name = "uint"
+			}
+
+			if name != "" {
+				line += " " + name
+			}
+
+			// This special character will be replaced with spacing once the
+			// correct alignment is calculated
+			line += "\x00"
+			if len(line) > flagMaxlen {
+				flagMaxlen = len(line)
+			}
+
+			line += definition.usage
+			line += def
+
+			flagLines = append(flagLines, line)
+		}
+
+		if definition.hasEnv {
+			line := ""
+
+			line = fmt.Sprintf("      %s", c.mergeWithEnvPrefix(definition.envAlias))
+
+			name := definition.field.Type().Name()
+			switch name {
+			case "float64":
+				name = "float"
+			case "int64":
+				name = "int"
+			case "uint64":
+				name = "uint"
+			}
+
+			if name != "" {
+				line += " " + name
+			}
+
+			// This special character will be replaced with spacing once the
+			// correct alignment is calculated
+			line += "\x00"
+			if len(line) > envMaxlen {
+				envMaxlen = len(line)
+			}
+
+			line += definition.usage
+			line += def
+
+			envLines = append(envLines, line)
+		}
+	}
+
+	if len(flagLines) > 0 {
+		fmt.Fprintln(buf, "\n\nFLAGS:\n")
+
+		for _, line := range flagLines {
+			sidx := strings.Index(line, "\x00")
+			spacing := strings.Repeat(" ", flagMaxlen-sidx)
+			// maxlen + 2 comes from + 1 for the \x00 and + 1 for the (deliberate) off-by-one in maxlen-sidx
+			fmt.Fprintln(buf, line[:sidx], spacing, line[sidx+1:])
+		}
+	}
+
+	if len(envLines) > 0 {
+		fmt.Fprintln(buf, "\n\nENVIRONMENT VARIABLES:\n")
+
+		for _, line := range envLines {
+			sidx := strings.Index(line, "\x00")
+			spacing := strings.Repeat(" ", envMaxlen-sidx)
+			// maxlen + 2 comes from + 1 for the \x00 and + 1 for the (deliberate) off-by-one in maxlen-sidx
+			fmt.Fprintln(buf, line[:sidx], spacing, line[sidx+1:])
+		}
+	}
+
+	return buf.String()
 }
 
 func processField(field reflect.Value, value string) error {
