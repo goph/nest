@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
+## [0.5.1] - 2018-01-17
+
 ### Fixed
 
 - Empty string flags and environment variables now fall back to the zero value of the type to avoid parsing issues
@@ -74,7 +77,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Initial release
 
 
-[Unreleased]: https://github.com/goph/nest/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/goph/nest/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/goph/nest/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/goph/nest/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/goph/nest/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/goph/nest/compare/v0.2.0...v0.3.0
