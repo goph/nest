@@ -190,8 +190,16 @@ func (c *Configurator) Load(config interface{}) error {
 		value := c.viper.Get(def.key)
 
 		if value != nil {
+			// Format the value as string
+			value := fmt.Sprintf("%v", value)
+
+			// If the value is empty string, fall back to the zero value of the type
+			if value == "" {
+				value = fmt.Sprintf("%v", reflect.Zero(def.field.Type()).Interface())
+			}
+
 			// Process the value as string
-			err := processField(def.field, fmt.Sprintf("%v", value))
+			err := processField(def.field, value)
 
 			if err != nil {
 				return err

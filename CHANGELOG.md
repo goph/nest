@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Empty string flags and environment variables now fall back to the zero value of the type to avoid parsing issues
+
 
 ## [0.5.0] - 2018-01-13
 

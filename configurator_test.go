@@ -284,6 +284,36 @@ func TestConfigurator_Load_FlagOsArgs(t *testing.T) {
 	os.Args = backupArgs
 }
 
+func TestConfigurator_Load_FlagEmpty(t *testing.T) {
+	type config struct {
+		Int   int   `flag:""`
+		Int8  int8  `flag:""`
+		Int32 int32 `flag:""`
+		Int64 int64 `flag:""`
+
+		Uint   uint   `flag:""`
+		Uint8  uint8  `flag:""`
+		Uint32 uint32 `flag:""`
+		Uint64 uint64 `flag:""`
+
+		Float32 float32 `flag:""`
+		Float64 float64 `flag:""`
+
+		Bool bool `flag:""`
+	}
+
+	expected := config{}
+	actual := expected
+
+	configurator := nest.NewConfigurator()
+	configurator.SetArgs([]string{"program"})
+
+	err := configurator.Load(&actual)
+
+	require.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
 func TestConfigurator_Load_Environment(t *testing.T) {
 	type config struct {
 		Value string `env:""`
@@ -394,6 +424,36 @@ func TestConfigurator_Load_EnvironmentSplitWords(t *testing.T) {
 	assert.Equal(t, expected, actual)
 
 	os.Clearenv()
+}
+
+func TestConfigurator_Load_EnvironmentEmpty(t *testing.T) {
+	type config struct {
+		Int   int   `env:""`
+		Int8  int8  `env:""`
+		Int32 int32 `env:""`
+		Int64 int64 `env:""`
+
+		Uint   uint   `env:""`
+		Uint8  uint8  `env:""`
+		Uint32 uint32 `env:""`
+		Uint64 uint64 `env:""`
+
+		Float32 float32 `env:""`
+		Float64 float64 `env:""`
+
+		Bool bool `env:""`
+	}
+
+	expected := config{}
+	actual := expected
+
+	configurator := nest.NewConfigurator()
+	configurator.SetArgs([]string{"program"})
+
+	err := configurator.Load(&actual)
+
+	require.NoError(t, err)
+	assert.Equal(t, expected, actual)
 }
 
 func TestConfigurator_Load_Default(t *testing.T) {
