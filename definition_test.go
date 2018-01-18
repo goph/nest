@@ -603,6 +603,10 @@ func TestField_EmbeddedStruct_Prefix(t *testing.T) {
 
 	type config struct {
 		Subconfig `prefix:"subconfig"`
+
+		OtherSubConfig struct {
+			Subconfig `prefix:""`
+		} `prefix:"other"`
 	}
 
 	c := config{}
@@ -611,6 +615,13 @@ func TestField_EmbeddedStruct_Prefix(t *testing.T) {
 		{
 			key:   "subconfig.Value",
 			field: ref.Field(0).Field(0),
+
+			hasDefault:   true,
+			defaultValue: "default",
+		},
+		{
+			key:   "other.Value",
+			field: ref.Field(1).Field(0).Field(0),
 
 			hasDefault:   true,
 			defaultValue: "default",
