@@ -145,8 +145,13 @@ func (c *Configurator) Load(config interface{}) error {
 		if def.hasFlag {
 			parseFlags = true
 
-			// TODO: put default value here?
-			flags.String(def.flagAlias, "", def.usage)
+			// Bool flags can be supplied without a value
+			if def.field.Kind() == reflect.Bool {
+				flags.Bool(def.flagAlias, false, def.usage)
+			} else {
+				flags.String(def.flagAlias, "", def.usage)
+			}
+
 			flag := flags.Lookup(def.flagAlias)
 
 			c.viper.BindPFlag(def.key, flag)
