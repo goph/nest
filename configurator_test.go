@@ -245,17 +245,31 @@ func TestConfigurator_Load_FlagHelpWithName(t *testing.T) {
 }
 
 func TestConfigurator_Load_FlagSplitWords(t *testing.T) {
+	type SubConfig struct {
+		Value string `flag:""`
+	}
+
 	type config struct {
+		SubConfig `split_words:"true"`
+
 		OtherValue string `flag:"" split_words:"true"`
+		OtherSubConfig SubConfig `split_words:"true"`
 	}
 
 	expected := config{
+		SubConfig: SubConfig{
+			Value: "value",
+		},
+
 		OtherValue: "value",
+		OtherSubConfig: SubConfig{
+			Value: "value",
+		},
 	}
 	actual := config{}
 
 	configurator := nest.NewConfigurator()
-	configurator.SetArgs([]string{"program", "--other-value", "value"})
+	configurator.SetArgs([]string{"program", "--sub-config-value", "value", "--other-value", "value", "--other-sub-config-value", "value"})
 
 	err := configurator.Load(&actual)
 	require.NoError(t, err)
@@ -405,19 +419,35 @@ func TestConfigurator_Load_EnvironmentWithPrefixAndAlias(t *testing.T) {
 }
 
 func TestConfigurator_Load_EnvironmentSplitWords(t *testing.T) {
+	type SubConfig struct {
+		Value string `env:""`
+	}
+
 	type config struct {
+		SubConfig `split_words:"true"`
+
 		OtherValue string `env:"" split_words:"true"`
+		OtherSubConfig SubConfig `split_words:"true"`
 	}
 
 	expected := config{
+		SubConfig: SubConfig{
+			Value: "value",
+		},
+
 		OtherValue: "value",
+		OtherSubConfig: SubConfig{
+			Value: "value",
+		},
 	}
 	actual := config{}
 
 	configurator := nest.NewConfigurator()
 
 	os.Clearenv()
+	os.Setenv("SUB_CONFIG_VALUE", "value")
 	os.Setenv("OTHER_VALUE", "value")
+	os.Setenv("OTHER_SUB_CONFIG_VALUE", "value")
 
 	err := configurator.Load(&actual)
 	require.NoError(t, err)

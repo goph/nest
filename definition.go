@@ -91,11 +91,22 @@ func getDefinitionsForStruct(structRef reflect.Value, prefix string) []fieldDefi
 
 		// Process child struct fields
 		if field.Kind() == reflect.Struct && !canDecode(field) {
-			prefix := keyPrefix + structField.Name
+			value, ok := structField.Tag.Lookup(TagPrefix)
+			prefix := keyPrefix + value
 
-			// Check if the field is required
-			if value, ok := structField.Tag.Lookup(TagPrefix); ok && value != "" {
-				prefix = keyPrefix + value
+			// No prefix is provided, guess the prefix from the struct name
+			if !ok {
+				name := structField.Name
+
+				// Try to split words in the struct name if possible
+				if v, ok := structField.Tag.Lookup(TagSplitWords); ok && isTrue(v) {
+					v = splitWords(name, ".")
+					if v != "" {
+						name = v
+					}
+				}
+
+				prefix = keyPrefix + name
 			}
 
 			structDefinitions := getDefinitionsForStruct(field, prefix)

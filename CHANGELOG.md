@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- `split_words` support for child and embedded structs
+
+### Changed
+
+- Allow empty struct prefix to inherit from the parent
+
 
 ## [0.5.1] - 2018-01-17
 
